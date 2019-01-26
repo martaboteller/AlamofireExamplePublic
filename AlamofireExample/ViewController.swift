@@ -12,145 +12,201 @@ import SwiftyJSON
 
 class ViewController: UIViewController {
 
-    @IBOutlet weak var inputText: UITextField!
-    @IBOutlet weak var imageToShow: UIImageView!
     @IBOutlet weak var goButton: UIButton!
+    @IBOutlet weak var inputText: UITextField!
     @IBOutlet weak var refreshButton: UIButton!
+    @IBOutlet weak var stackView: UIStackView!
+    @IBOutlet weak var viewInsideStack: UIView!
+    //Variables
     
-    let farm: String = ""
-    let id: String = ""
-    let secret: String = ""
-    let server: String = ""
-   
-    
+    var dicName: [Int : String] = [:]
+    var dicURL: [String : URL] = [:]
+    var dicImages: [Int : UIImage] = [:]
+    var dicImages2: [String : UIImage] = [:]
+    var finalDic: [Int: UIImage] = [:]
+    var alamofireCont: AlamofireController = AlamofireController()
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        var counter: Int = 0
         
-        getRequestAPICall( parameters_name: "")
-        getImage()
+        //Get the text from textField
+        if dicName.count !=  0 {
+            print("I have got the text!")
+            
+            for (_, value) in dicName {
+                
+                alamofireCont.getRequestAPICall(letter: value, success: {
+                    url in
+                    //Save the combination of key - urls
+                    self.dicURL = [value : url]
+                    //Save the combination of key - images
+                    self.dicImages = self.saveImages(dicURL: self.dicURL)
+                    
+                    //If all images have been saved display them
+                    if counter == self.dicName.count - 1 {
+                      
+                        //Display images
+                        self.displayImages(dicImages: self.dicImages)
+                    }else{
+                        counter += 1
+                        print(counter)
+                    }
+                }){ error in
+                    print(error)
+                }
+            }
+            
+        }
+        
+    }
+        
+        
+    @IBAction func refreshButton(_ sender: Any) {
+        
+        inputText.text = ""
+        let subviews = self.stackView.subviews
+        for subview in subviews {
+            subview.removeFromSuperview()
+        }
     }
     
-    func getImage() {
-        //Construct the image path
-        //http://farm{farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
-        let stringURL = "https://farm5.staticflickr.com/4917/45876742681_a7dc2f2c58.jpg"
-        //let stringURL = "https://farm\(farm).staticflickr.com/\(server)/\(id)_\(secret).jpg"
+    @IBAction func goButton(_ sender: Any) {
         
-        let imageURL = URL(string: stringURL)
-        do {
-            let imageData = try Data(contentsOf: imageURL!)
-            imageToShow.image = UIImage(data: imageData)
+        //Retrieve the text
+        let inputTxt: String = inputText.text!.replacingOccurrences(of: " ", with: "")
+        print(inputTxt)
+     
+        //If the textField is not empty get the text
+        if inputTxt == "" {
+            let alertController = UIAlertController(title: "Error", message: "Empty text field", preferredStyle: .alert)
+            let defaultAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+            alertController.addAction(defaultAction)
+            self.present(alertController, animated: true)
             
+        }else{
+            if containsOnlyLetters(input: inputTxt) {
+                for i in 0 ... (inputTxt.count - 1) {
+                    dicName[i] = inputTxt[i]
+                }
+                viewDidLoad()
+            }else{
+                let alertController = UIAlertController(title: "Error", message: "Only letters are allowed", preferredStyle: .alert)
+                let defaultAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+                alertController.addAction(defaultAction)
+                self.present(alertController, animated: true)
+           }
+        
+        }
+    }
+    
+    
+    
+    func displayImages(dicImages: [Int: UIImage]){
+        
+        let numberImages: Int = dicImages.values.count - 1
+        var distance: Int = 0
+    
+        //Create view as left margin and add it to stackview
+        //let myView = UIView(frame: CGRect(x: 10, y: 0, width: 50, height: 50))
+        //let myView = UIView(frame: CGRect(x:0, y: 0, width: 50, height: 50))
+        
+        viewInsideStack.backgroundColor = .yellow
+     
+        if numberImages < 6 {
+            for i in 0 ... numberImages {
+                //let newImageView: UIImageView = UIImageView(frame: CGRect(x: distance, y: 0, width: 50, height: 50))
+                let newImageView: UIImageView = UIImageView()
+                newImageView.image = dicImages[i]
+                viewInsideStack.addSubview(newImageView)
+                distance += 55
+            }
+        }else{
+            for i in 0 ... numberImages {
+                let newImageView: UIImageView = UIImageView(frame: CGRect(x: 5 + distance, y: 0, width: 20, height: 20))
+                newImageView.image = dicImages[i]
+                viewInsideStack.addSubview(newImageView)
+                distance += 25
+            }
+        }
+       
+        /*let horizontalContraint = viewInsideStack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor)
+        let verticalContraint = viewInsideStack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor)
+        let widthlContraint = viewInsideStack.widthAnchor.constraint(equalToConstant: 50)
+        let heightContraint = viewInsideStack.heightAnchor.constraint(equalToConstant: 50)
+      
+        NSLayoutConstraint.activate([horizontalContraint,verticalContraint,widthlContraint,heightContraint])*/
+        
+        self.stackView.addSubview(viewInsideStack)
+        self.stackView.distribution = .fillEqually
+        self.stackView.axis = .horizontal
+        self.stackView.alignment = .center
+        self.stackView.backgroundColor = .orange
+        
+    }
+    
+    //Save downloaded images into a dictionary
+    func saveImages(dicURL: [String : URL])->[Int: UIImage] {
+        
+        do {
+            
+            for i in 0 ... (dicName.count - 1) {
+              
+                for (key, _) in dicURL {
+                    if key == dicName[i] {
+                        let imageData = try Data(contentsOf: dicURL[key]!)
+                        let image: UIImage = UIImage(data: imageData)!
+                        dicImages [i] = image
+                    }
+                }
+            }
         }catch{
             print (error)
         }
-     
+        return dicImages
     }
     
-    
-    
-    func getRequestAPICall(parameters_name: String)  {
+    func containsOnlyLetters(input: String) -> Bool {
+         let spaceChr = NSCharacterSet.whitespaces
         
-       // let todosEndpoint: String = "your_server_url" + "parameterName=\(parameters_name)"
-        //let todosEndpoint: String =  "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c7ababa5d14a6570cff5f8ccf9ad46b2&tags=hello&per_page=1&format=json&nojsoncallback=1"
-        
-        //let todosEndpoint: String = "https://api.flickr.com/services/rest/?method=flickr.groups.search&api_key=c7ababa5d14a6570cff5f8ccf9ad46b2&text=a&per_page=1&format=json&nojsoncallback=1"
-        
-        let todosEndpoint: String = "https://api.flickr.com/services/rest/?method=flickr.groups.pools.getphotos&api_key=c7ababa5d14a6570cff5f8ccf9ad46b2&group_id=27034531@N00&tags=a&per_page=1&format=json&nojsoncallback=1"
-        
-        Alamofire.request(todosEndpoint, method: .get, encoding: JSONEncoding.default)
-            .responseData { response in
-                //debugPrint(response)
-                
-                if let data = response.result.value {
-                    
-                   // let data: Data // received from a network request, for example
-                    let json = try? JSONSerialization.jsonObject(with: data, options: [])
-                    //print(json)
-                    
-                    if let firstDictionary = json as? [String: AnyObject] {
-                        
-                        var secondDictionary: [String: AnyObject] = firstDictionary ["photos"] as! [String : AnyObject]
-                        
-                        
-                        let page: Int = secondDictionary["page"] as! Int
-                        let pages: Int = secondDictionary["pages"] as! Int
-                        let perPage: Int = secondDictionary["perpage"] as! Int
-                        let group: NSArray = secondDictionary["photo"] as! NSArray
-                        let myGroup: NSDictionary = group[0] as! NSDictionary
-                        let dateadded: String = myGroup.value(forKey: "dateadded") as! String
-                        let farm: String = String(myGroup.value(forKey: "farm") as! Int)
-                        let id: String = myGroup.value(forKey: "id") as! String
-                        let isfamily: Int = myGroup.value(forKey: "isfamily") as! Int
-                        let isfriend: Int = myGroup.value(forKey: "isfriend") as! Int
-                        let ispublic: Int = myGroup.value(forKey: "ispublic") as! Int
-                        let owner: String = myGroup.value(forKey: "owner") as! String
-                        let ownername: String = myGroup.value(forKey: "ownername") as! String
-                        let secret: String = myGroup.value(forKey: "secret") as! String
-                        let server: String = myGroup.value(forKey: "server") as! String
-                        let title: String = myGroup.value(forKey: "title") as! String
-                      
-                        print(String(page))
-                        print(String((pages)))
-                        print(String(perPage))
-                        print(dateadded)
-                        print(farm)
-                        print(id)
-                        print(isfamily)
-                        print(isfriend)
-                        print(ispublic)
-                        print(owner)
-                        print(ownername)
-                        print(secret)
-                        print(server)
-                        print(title)
-                        
-                       
-                    }
-                    
+            for chr in input {
+                if (!(chr >= "a" && chr <= "z") && !(chr >= "A" && chr <= "Z")) {
+                    return false
                 }
-                
-              
-                
-        
-                    
-                  
-        }
+            }
+            return true
     }
-        
-    
-   
-   
-                        
-                        
-                
-               
-               
-    
     
         
-        
-       /* https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=FLICKR_API_KEY&tags=SEARCH_TEXT&per_page=25&format=json&nojsoncallback=1
-        
-            https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=c7ababa5d14a6570cff5f8ccf9ad46b2&tags=hello&per_page=25&format=json&nojsoncallback=1
-        
-        c7ababa5d14a6570cff5f8ccf9ad46b2
-        
-        fde2ddc2ee9971ed
-        
-        Image Path: https://farmFARM.staticflickr.com/SERVER/ID_SECRET_m.jpg
-        Example: https://farm8.staticflickr.com/7859/46664736772_7cdc490af9_m.jpg
- 
-        
-      {"photos":{"page":1,"pages":4288,"perpage":25,"total":"107185","photo":,{"id":"46664736772","owner":"72096526@N04","secret":"7cdc490af9","server":"7859","farm":8,"title":"A Warm Hello","ispublic":1,"isfriend":0,"isfamily":0}  */
-        
-        
-      
-
-    
-    
-
+  
 }
 
+
+extension String {
+    
+    var length: Int {
+        return count
+    }
+    
+    subscript (i: Int) -> String {
+        return self[i ..< i + 1]
+    }
+    
+    func substring(fromIndex: Int) -> String {
+        return self[min(fromIndex, length) ..< length]
+    }
+    
+    func substring(toIndex: Int) -> String {
+        return self[0 ..< max(0, toIndex)]
+    }
+    
+    subscript (r: Range<Int>) -> String {
+        let range = Range(uncheckedBounds: (lower: max(0, min(length, r.lowerBound)),
+                                            upper: min(length, max(0, r.upperBound))))
+        let start = index(startIndex, offsetBy: range.lowerBound)
+        let end = index(start, offsetBy: range.upperBound - range.lowerBound)
+        return String(self[start ..< end])
+    }
+    
+}
