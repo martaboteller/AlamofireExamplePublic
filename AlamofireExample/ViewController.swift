@@ -11,47 +11,40 @@ import SwiftyJSON
 
 
 class ViewController: UIViewController {
-
-    @IBOutlet weak var goButton: UIButton!
+  
+   
     @IBOutlet weak var inputText: UITextField!
+    @IBOutlet weak var goButton: UIButton!
+    @IBOutlet weak var verticalStackView: UIStackView!
+    @IBOutlet weak var interiorView: UIView!
     @IBOutlet weak var refreshButton: UIButton!
-    @IBOutlet weak var stackView: UIStackView!
-    @IBOutlet weak var viewInsideStack: UIView!
+   
     //Variables
-    
     var dicName: [Int : String] = [:]
     var dicURL: [String : URL] = [:]
     var dicImages: [Int : UIImage] = [:]
-    var dicImages2: [String : UIImage] = [:]
-    var finalDic: [Int: UIImage] = [:]
     var alamofireCont: AlamofireController = AlamofireController()
-    
-    
+    var counter: Int = 0
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        var counter: Int = 0
-        
+       
         //Get the text from textField
         if dicName.count !=  0 {
-            print("I have got the text!")
-            
+   
+            //Get image for every letter in the input text
             for (_, value) in dicName {
-                
                 alamofireCont.getRequestAPICall(letter: value, success: {
                     url in
-                    //Save the combination of key - urls
+                    //Save the combination of key - url
                     self.dicURL = [value : url]
-                    //Save the combination of key - images
-                    self.dicImages = self.saveImages(dicURL: self.dicURL)
-                    
+                    //Save the combination of key - image
+                    self.dicImages = self.saveImages(dicURL: self.dicURL) //Function saveImages
                     //If all images have been saved display them
-                    if counter == self.dicName.count - 1 {
-                      
-                        //Display images
-                        self.displayImages(dicImages: self.dicImages)
+                    if self.counter == self.dicName.count - 1 {
+                        self.displayImages(dicImages: self.dicImages) //Function displayImages
                     }else{
-                        counter += 1
-                        print(counter)
+                        self.counter += 1
                     }
                 }){ error in
                     print(error)
@@ -61,22 +54,33 @@ class ViewController: UIViewController {
         }
         
     }
-        
-        
+    
+    //Clean the screen and reset all variables
     @IBAction func refreshButton(_ sender: Any) {
         
+        //Empty input text
         inputText.text = ""
-        let subviews = self.stackView.subviews
+       
+        //Remove content of UIView (interiorView)
+        let subviews = self.interiorView.subviews
+        for i in 0 ... dicImages.values.count - 1 {
+            dicImages[i] = nil
+            dicName[i] = nil
+        }
         for subview in subviews {
             subview.removeFromSuperview()
         }
+        //Remove frame
+        interiorView.frame = CGRect.zero
+        self.counter = 0
+
     }
     
+    //Get image letters according to input text
     @IBAction func goButton(_ sender: Any) {
         
-        //Retrieve the text
+        //Retrieve the text without empty spaces
         let inputTxt: String = inputText.text!.replacingOccurrences(of: " ", with: "")
-        print(inputTxt)
      
         //If the textField is not empty get the text
         if inputTxt == "" {
@@ -87,10 +91,17 @@ class ViewController: UIViewController {
             
         }else{
             if containsOnlyLetters(input: inputTxt) {
-                for i in 0 ... (inputTxt.count - 1) {
-                    dicName[i] = inputTxt[i]
+                if inputTxt.count > 13 {
+                    let alertController = UIAlertController(title: "Error", message: "Maximum 13 letters allowed", preferredStyle: .alert)
+                    let defaultAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+                    alertController.addAction(defaultAction)
+                    self.present(alertController, animated: true)
+                } else {
+                    for i in 0 ... (inputTxt.count - 1) {
+                        dicName[i] = inputTxt[i] //Use String Extension
+                    }
+                    viewDidLoad()
                 }
-                viewDidLoad()
             }else{
                 let alertController = UIAlertController(title: "Error", message: "Only letters are allowed", preferredStyle: .alert)
                 let defaultAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
@@ -101,62 +112,39 @@ class ViewController: UIViewController {
         }
     }
     
-    
-    
+    //Display images on screen
     func displayImages(dicImages: [Int: UIImage]){
         
+        //Variables to construct View Frame
         let numberImages: Int = dicImages.values.count - 1
         var distance: Int = 0
-    
-        //Create view as left margin and add it to stackview
-        //let myView = UIView(frame: CGRect(x: 10, y: 0, width: 50, height: 50))
-        //let myView = UIView(frame: CGRect(x:0, y: 0, width: 50, height: 50))
-        
-        viewInsideStack.backgroundColor = .yellow
-     
-        if numberImages < 6 {
-            for i in 0 ... numberImages {
-                //let newImageView: UIImageView = UIImageView(frame: CGRect(x: distance, y: 0, width: 50, height: 50))
-                let newImageView: UIImageView = UIImageView()
-                newImageView.image = dicImages[i]
-                viewInsideStack.addSubview(newImageView)
-                distance += 55
-            }
-        }else{
-            for i in 0 ... numberImages {
-                let newImageView: UIImageView = UIImageView(frame: CGRect(x: 5 + distance, y: 0, width: 20, height: 20))
-                newImageView.image = dicImages[i]
-                viewInsideStack.addSubview(newImageView)
-                distance += 25
-            }
-        }
-       
-        /*let horizontalContraint = viewInsideStack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor)
-        let verticalContraint = viewInsideStack.centerYAnchor.constraint(equalTo: self.view.centerYAnchor)
-        let widthlContraint = viewInsideStack.widthAnchor.constraint(equalToConstant: 50)
-        let heightContraint = viewInsideStack.heightAnchor.constraint(equalToConstant: 50)
+        let viewWidth: Int = (numberImages + 1) * Int(dicImages[0]!.size.width)
+        let viewHeight: Int = Int(dicImages[0]!.size.height)
+        let xDist: Int =  (Int(self.verticalStackView.bounds.width) - viewWidth)/2
+        interiorView.frame = CGRect(x: xDist, y: 0, width: viewWidth,height: viewHeight)
       
-        NSLayoutConstraint.activate([horizontalContraint,verticalContraint,widthlContraint,heightContraint])*/
-        
-        self.stackView.addSubview(viewInsideStack)
-        self.stackView.distribution = .fillEqually
-        self.stackView.axis = .horizontal
-        self.stackView.alignment = .center
-        self.stackView.backgroundColor = .orange
-        
+        for i in 0 ... numberImages {
+                let newImageView: UIImageView = UIImageView(frame: CGRect(x: distance, y: 0, width: Int(dicImages[i]!.size.width), height: Int(dicImages[i]!.size.width)))
+                newImageView.image = dicImages[i]
+                interiorView.addSubview(newImageView)
+                distance += Int(dicImages[i]!.size.width)
+        }
     }
     
     //Save downloaded images into a dictionary
     func saveImages(dicURL: [String : URL])->[Int: UIImage] {
         
         do {
-            
             for i in 0 ... (dicName.count - 1) {
-              
                 for (key, _) in dicURL {
                     if key == dicName[i] {
                         let imageData = try Data(contentsOf: dicURL[key]!)
-                        let image: UIImage = UIImage(data: imageData)!
+                        var image: UIImage = UIImage(data: imageData)!
+                        if dicName.count < 6{
+                             image = resizeImage(image: image, targetSize: CGSize(width: 50, height: 50))
+                        } else {
+                             image = resizeImage(image: image, targetSize: CGSize(width: 30, height: 30))
+                        } //Change image size depending on number of chars on input text
                         dicImages [i] = image
                     }
                 }
@@ -167,9 +155,8 @@ class ViewController: UIViewController {
         return dicImages
     }
     
+    //Function that returns true if input text only contains letters
     func containsOnlyLetters(input: String) -> Bool {
-         let spaceChr = NSCharacterSet.whitespaces
-        
             for chr in input {
                 if (!(chr >= "a" && chr <= "z") && !(chr >= "A" && chr <= "Z")) {
                     return false
@@ -177,6 +164,34 @@ class ViewController: UIViewController {
             }
             return true
     }
+    
+    //Function that changes image size
+    func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
+        let size = image.size
+        
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+        
+        // Figure out what our orientation is, and use that to form the rectangle
+        var newSize: CGSize
+        if(widthRatio > heightRatio) {
+            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
+        } else {
+            newSize = CGSize(width: size.width * widthRatio,  height: size.height * widthRatio)
+        }
+        
+        // This is the rect that we've calculated out and this is what is actually used below
+        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
+        
+        // Actually do the resizing to the rect using the ImageContext stuff
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return newImage!
+    }
+
     
         
   
@@ -210,3 +225,6 @@ extension String {
     }
     
 }
+
+
+
