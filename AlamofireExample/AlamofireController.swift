@@ -19,9 +19,10 @@ class AlamofireController {
         var id: String = ""
         var secret: String = ""
         var server: String = ""
+        let yourAPIkey: String = "" //Your API Key goes here
         
         //URL to retreive the image
-        let todosEndpoint: String = "https://api.flickr.com/services/rest/?method=flickr.groups.pools.getphotos&api_key=c7ababa5d14a6570cff5f8ccf9ad46b2&group_id=27034531@N00&tags=\(letter)&per_page=25&format=json&nojsoncallback=1"
+        let todosEndpoint: String = "https://api.flickr.com/services/rest/?method=flickr.groups.pools.getphotos&api_key=\(yourAPIkey)&group_id=27034531@N00&tags=\(letter)&per_page=25&format=json&nojsoncallback=1"
         
         //Alamofire call
         Alamofire.request(todosEndpoint, method: .get, encoding: JSONEncoding.default)
