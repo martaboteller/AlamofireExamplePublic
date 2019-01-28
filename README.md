@@ -84,7 +84,7 @@ for i in 0 ... numberImages {
    distance += Int(dicImages[i]!.size.width)
 }
 
-//Function to resize images to fit the screen
+//Function that resizes images to fit the screen
 ...
 
 ```
