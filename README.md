@@ -3,7 +3,7 @@
 <table border=0 bordercolorlight=white>
 <tr>
 <th width=40%>
-<img src="https://github.com/martabotellter/KVOExample/resources/kvo.gif?raw=true" width="300" height="450"> 
+<img src="https://github.com/martaboteller/AlamofireExamplePublic/blob/master/alamofire.png?raw=true" width="300" height="450"> 
 </th>
 <th align="left" width=60%>
   <p>This is a simple example of Alamofire integration.</p>
