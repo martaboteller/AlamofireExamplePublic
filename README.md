@@ -31,7 +31,7 @@
 
 &nbsp;
 
-2nd step: Define the Alamofire request acll
+2nd step: Define the Alamofire request call
 ```
 //Alamofire call
 Alamofire.request(todosEndpoint, method: .get, encoding: JSONEncoding.default)
@@ -42,6 +42,7 @@ Alamofire.request(todosEndpoint, method: .get, encoding: JSONEncoding.default)
 
 3rd step: Serialize JSON result and construct the image url
 ```
+//Json serialization
 let json = try? JSONSerialization.jsonObject(with: data, options: [])
 
 if let firstDictionary = json as? [String: AnyObject] {
@@ -65,6 +66,7 @@ if let firstDictionary = json as? [String: AnyObject] {
 
 4th step: Control emtpy spaces, numbers and symbols displaying an alert if necessary
 ```
+//Displaying an alert
 let alertController = UIAlertController(title: "Error", message: "Empty text field", preferredStyle: .alert)
 let defaultAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
 alertController.addAction(defaultAction)
@@ -72,14 +74,19 @@ self.present(alertController, animated: true)
 ```
 &nbsp;
 
-5th step: Programmly add UIImageViews to the container (StackView) and resize images to fit the screen
+5th step: Programmly add UIImageViews to UIView inside a StackView 
 ```
+//Add images into UIView
 for i in 0 ... numberImages {
-                let newImageView: UIImageView = UIImageView(frame: CGRect(x: distance, y: 0, width: Int(dicImages[i]!.size.width), height: Int(dicImages[i]!.size.width)))
-                newImageView.image = dicImages[i]
-                interiorView.addSubview(newImageView)
-                distance += Int(dicImages[i]!.size.width)
+   let newImageView: UIImageView = UIImageView(frame: CGRect(x: distance, y: 0, width: Int(dicImages[i]!.size.width), height: Int(dicImages[i]!.size.width)))
+   newImageView.image = dicImages[i]
+   interiorView.addSubview(newImageView)
+   distance += Int(dicImages[i]!.size.width)
 }
+
+//Function to resize images to fit the screen
+...
+
 ```
 
 &nbsp;
