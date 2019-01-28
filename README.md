@@ -12,9 +12,8 @@
   <p>
   A Flickr API is called during the Alamofire request. In particular the flickr.groups.pools.getPhotos method has been used to display
   an image from the OneLetter group of images (https://www.flickr.com/groups/oneletter/).
-  With the refresh button we are able to remove the view content and frames.
-  
- <p> For a better visualization the number of entered characters has been limited to 13. It has also been imposed that written characters
+ 
+ <p> With the refresh button we are able to remove the view content and frames. For a better visualization the number of entered characters has been limited to 13. It has also been imposed that written characters
  must be letters and not numbers or symbols. </p>
   
 </th>
@@ -26,47 +25,60 @@
 
 ## Deployment
 
-1st step: Adquire an API Key 
+1st step: Acquire an API Key 
 
-Learn how to create an API Key [here](https://www.flickr.com/services/api/misc.api_keys.html)
+### Learn how to create an API Key [here](https://www.flickr.com/services/api/misc.api_keys.html)
 
 &nbsp;
 
-2nd step: create an observable property for the textField
+2nd step: Define the Alamofire request acll
 ```
-@objc dynamic var inputText: String?
-```
-&nbsp;
-
-
-3rd step: define an observer for new values of the property inputText
-```
-inputTextObservationToken = observe(\.inputText, options: .new, changeHandler: {(vc,change) in
-     guard let updatedInputText = change.newValue as? String else {return}
-          if self.contacts.contains(updatedInputText) {
-                vc.existingLabel.text = "Contact already exists!"
-                self.addButton.isEnabled = false
-          }else{
-                vc.existingLabel.text = ""
-                self.addButton.isEnabled = true
-          }
-})
+//Alamofire call
+Alamofire.request(todosEndpoint, method: .get, encoding: JSONEncoding.default)
+       .responseData { response in
 ```
 &nbsp;
 
-4th step: assign the value of textField.text to the observable property
+
+3rd step: Serialize JSON result and construct the image url
 ```
-@IBAction func textFieldTextDidChange() {
-      inputText = textField.text
-}
+let json = try? JSONSerialization.jsonObject(with: data, options: [])
+
+if let firstDictionary = json as? [String: AnyObject] {
+   var secondDictionary: [String: AnyObject] = firstDictionary ["photos"] as! [String : AnyObject]
+   
+   let group: NSArray  = secondDictionary["photo"] as! NSArray
+   //Random number from 0 to 25
+   let number: Int = Int.random(in: 0 ... 24)
+   let myGroup: NSDictionary  = group[number] as! NSDictionary
+   farm = String(myGroup.value(forKey: "farm") as! Int)
+   id  = myGroup.value(forKey: "id") as! String
+   secret  = myGroup.value(forKey: "secret") as! String
+   server  = myGroup.value(forKey: "server") as! String
+                        
+   //Construct the url containing the image
+   //http://farm{farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
+   let imageURL: URL = URL(string: "https://farm\(farm).staticflickr.com/\(server)/\(id)_\(secret).jpg")!
+                        
 ```
 &nbsp;
 
-5th step: invalidate the observation token 
+4th step: Control emtpy spaces, numbers and symbols displaying an alert if necessary
 ```
-override func viewWillDisappear(_ animated: Bool) {
-   super.viewWillDisappear(animated)
-   inputTextObservationToken!.invalidate()
+let alertController = UIAlertController(title: "Error", message: "Empty text field", preferredStyle: .alert)
+let defaultAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+alertController.addAction(defaultAction)
+self.present(alertController, animated: true)
+```
+&nbsp;
+
+5th step: Programmly add UIImageViews to the container (StackView) and resize images to fit the screen
+```
+for i in 0 ... numberImages {
+                let newImageView: UIImageView = UIImageView(frame: CGRect(x: distance, y: 0, width: Int(dicImages[i]!.size.width), height: Int(dicImages[i]!.size.width)))
+                newImageView.image = dicImages[i]
+                interiorView.addSubview(newImageView)
+                distance += Int(dicImages[i]!.size.width)
 }
 ```
 
