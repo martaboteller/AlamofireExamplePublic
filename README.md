@@ -27,7 +27,7 @@
 
 1st step: Acquire an API Key 
 
-### Learn how to create an API Key [here](https://www.flickr.com/services/api/misc.api_keys.html)
+Learn how to create an API Key [here](https://www.flickr.com/services/api/misc.api_keys.html)
 
 &nbsp;
 
